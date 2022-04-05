@@ -19,21 +19,10 @@ import {
   List,
 } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
-import { db } from "../firebase";
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  addDoc,
-  serverTimestamp,
-  doc,
-  deleteDoc,
-  updateDoc,
-} from "firebase/firestore";
 import TodoItem from "./todoItem";
 import axios from "axios";
 import { MdSearch } from "react-icons/md";
+import { serverTimestamp } from "firebase/firestore";
 
 export interface Todo {
   id: string;
@@ -51,7 +40,7 @@ const Todos = () => {
 
   useEffect(() => {
     fetchTodo();
-  }, []);
+  });
 
   useEffect(() => {
     const checkIfClickOutside = (e: any) => {
@@ -101,7 +90,6 @@ const Todos = () => {
             if (response.data.response === "success") {
               alert(`${input} is added successfully!`);
               setInput("");
-              fetchTodo();
             }
           } catch (error) {
             alert(`Error ${error}`);
@@ -116,7 +104,6 @@ const Todos = () => {
               alert(`Todo id "${selectedTodo.id}" is updated successfully!`);
               setSelectedTodo(undefined);
               setInput("");
-              fetchTodo();
             }
           } catch (error) {
             alert(`Error ${error}`);
@@ -136,7 +123,6 @@ const Todos = () => {
       const response = await axios.delete(`/api/todo/${id}`);
       if (response.data.response === "success") {
         alert(`Todo id "${id}" is deleted successfully!`);
-        fetchTodo();
       }
     } catch (error) {
       alert(`Something went wrong! ${error}`);
@@ -167,7 +153,6 @@ const Todos = () => {
         );
         setInput("");
         setSelectedTodo(undefined);
-        fetchTodo();
       }
     } catch (error) {
       alert(`Erorr ${error}`);
@@ -222,9 +207,9 @@ const Todos = () => {
           </Button>
         )}
       </InputGroup>
-      <List w="100%">
-        {todos &&
-          todos
+      {todos && todos?.length > 0 ? (
+        <List w="100%">
+          {todos
             .filter((val) => {
               if (!isSearching) {
                 return val;
@@ -254,7 +239,10 @@ const Todos = () => {
                 </Fragment>
               );
             })}
-      </List>
+        </List>
+      ) : (
+        <Text>{"No todo"}</Text>
+      )}
     </Flex>
   );
 };
