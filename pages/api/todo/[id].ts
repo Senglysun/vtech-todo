@@ -9,6 +9,7 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
   const docRef = doc(db, "todos", `${id}`);
 
   if (req.method === "DELETE") {
+  
     deleteDoc(docRef);
     res.status(200).json({ response: `success` });
   } else if (req.method === "PUT") {

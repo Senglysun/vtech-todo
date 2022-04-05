@@ -22,7 +22,7 @@ import { AddIcon } from "@chakra-ui/icons";
 import TodoItem from "./todoItem";
 import axios from "axios";
 import { MdSearch } from "react-icons/md";
-import { serverTimestamp } from "firebase/firestore";
+import { Firestore, serverTimestamp } from "firebase/firestore";
 
 export interface Todo {
   id: string;
@@ -40,7 +40,7 @@ const Todos = () => {
 
   useEffect(() => {
     fetchTodo();
-  });
+  }, []);
 
   useEffect(() => {
     const checkIfClickOutside = (e: any) => {
@@ -55,6 +55,12 @@ const Todos = () => {
       document.removeEventListener("mousedown", checkIfClickOutside);
     };
   }, []);
+
+  // useEffect(() => {
+  //   window.addEventListener("offline", (e) => {
+  //     alert("Todo app is offline!");
+  //   });
+  // });
 
   const fetchTodo = async () => {
     try {
@@ -79,7 +85,7 @@ const Todos = () => {
   };
 
   const onAddTodo = async () => {
-    if (input != "") {
+    if (input != "" && input.trim()) {
       const existedTodo = todos?.find((t) => t.todo === input);
       if (!existedTodo) {
         if (!selectedTodo) {
@@ -88,7 +94,17 @@ const Todos = () => {
               todo: input,
             });
             if (response.data.response === "success") {
-              alert(`${input} is added successfully!`);
+              var timestamp = new Date();
+              // alert(`${input} is added successfully!`);
+              setTodos((prev) => [
+                {
+                  id: "",
+                  todo: input,
+                  isComplete: false,
+                  createdAt: timestamp,
+                },
+                ...prev,
+              ]);
               setInput("");
             }
           } catch (error) {
@@ -101,7 +117,19 @@ const Todos = () => {
               todo: input,
             });
             if (response.data.response === "success") {
-              alert(`Todo id "${selectedTodo.id}" is updated successfully!`);
+              var newTodos = todos ? [...todos] : [];
+              var timestamp = new Date();
+              todos?.map((todo, index) => {
+                if (todo.id === selectedTodo.id) {
+                  newTodos[index] = {
+                    ...selectedTodo,
+                    todo: input,
+                    createdAt: timestamp,
+                  };
+                }
+              });
+              setTodos(newTodos);
+              // alert(`Todo id "${selectedTodo.id}" is updated successfully!`);
               setSelectedTodo(undefined);
               setInput("");
             }
@@ -122,7 +150,8 @@ const Todos = () => {
       e.stopPropagation();
       const response = await axios.delete(`/api/todo/${id}`);
       if (response.data.response === "success") {
-        alert(`Todo id "${id}" is deleted successfully!`);
+        setTodos(todos?.filter((item) => item.id !== id));
+        // alert(`Todo id "${id}" is deleted successfully!`);
       }
     } catch (error) {
       alert(`Something went wrong! ${error}`);
@@ -140,17 +169,29 @@ const Todos = () => {
   };
 
   const onMarkAsCompleteClicked = async (item: Todo) => {
+    var newTodos = todos ? [...todos] : [];
+    todos?.map((todo, index) => {
+      if (todo.id === item.id) {
+        newTodos[index] = {
+          id: item.id,
+          todo: item.todo,
+          isComplete: !item.isComplete,
+          createdAt: item.createdAt,
+        };
+      }
+    });
+    setTodos(newTodos);
     try {
       const response = await axios.patch(`/api/todo/${item.id}`, {
         ...item,
         isComplete: !item.isComplete,
       });
       if (response.data.response === "success") {
-        alert(
-          `Todo id ${item.todo} is mark to ${
-            item.isComplete ? "incomplete" : "completed"
-          } successfully!`
-        );
+        // alert(
+        //   `Todo id ${item.todo} is mark to ${
+        //     item.isComplete ? "incomplete" : "completed"
+        //   } successfully!`
+        // );
         setInput("");
         setSelectedTodo(undefined);
       }
@@ -159,8 +200,9 @@ const Todos = () => {
     }
   };
 
-  const onSearchPressed = () => {
+  const onTextChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsSearching(true);
+    setInput(e.target.value);
   };
 
   return (
@@ -176,13 +218,13 @@ const Todos = () => {
     >
       <Flex justify="space-between" w="100%" align="center">
         <Heading mb={4}>Todo App!</Heading>
-        <Button
+        {/* <Button
           onClick={onSearchPressed}
           colorScheme={isSearching ? "gray" : "blue"}
           leftIcon={<MdSearch />}
         >
           {isSearching ? "Searching..." : "Search"}
-        </Button>
+        </Button> */}
       </Flex>
       <InputGroup>
         <InputLeftElement
@@ -199,7 +241,7 @@ const Todos = () => {
           placeholder={isSearching ? "Search todo" : "New todo"}
           value={input}
           onKeyDown={onKeyDown}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => onTextChanged(e)}
         />
         {!isSearching && (
           <Button ml="2" onClick={onAddTodo}>

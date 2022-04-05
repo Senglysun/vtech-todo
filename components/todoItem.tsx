@@ -45,7 +45,7 @@ const TodoItem = (props: ITodoItemProps) => {
               {props.item.todo}
             </Text>
             <Text style={{ color: "gray" }}>
-              {new Date(props.item.createdAt).toLocaleString("default", {
+              {new Date(props.item.createdAt).toLocaleDateString("default", {
                 month: "short",
                 year: "numeric",
                 day: "2-digit",
